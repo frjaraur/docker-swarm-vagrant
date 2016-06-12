@@ -54,9 +54,9 @@ Vagrant.configure(2) do |config|
       virtualbox__intnet: "DOCKER_SWARM"
 
 
-      if opts[:swarm_role] == "keyvalue"
-    	  config.vm.network "forwarded_port", guest: 8500, host: 8500, auto_correct: true
-      end
+    #  if opts[:swarm_role] == "keyvalue"
+    #	  config.vm.network "forwarded_port", guest: 8500, host: 8500, auto_correct: true
+    #  end
 
 
       if opts[:swarm_role] == "manager"
