@@ -44,6 +44,12 @@ SetUpSwarmManager(){
   [ $? -ne 0 ] && ERR=$(( $ERR + 1 ))
 }
 
+
+
+## Timezone and NTP
+apt-get -qq install chrony
+timedatectl set-timezone Europe/Madrid
+
 ## Configure Docker Engines with Swarm and KeyValue Store Information
 echo "DOCKER_OPTS=\"-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375 --cluster-store=consul://${kvserver}:8500 --cluster-advertise=${ip}:2375\"" >> /etc/default/docker
 service docker restart
