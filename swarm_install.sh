@@ -17,19 +17,19 @@ ResolveFromHosts(){
 }
 
 SetUpKVStore(){
-  COMMAND="docker run -d -p 8500:8500 --name kv-store progrium/consul -server -bootstrap"
+  COMMAND="docker run --restart=always -d -p 8500:8500 --name kv-store progrium/consul -server -bootstrap"
   echo ${COMMAND}
   ${COMMAND}
 }
 
 SetUpSwarmAgent(){
-  COMMAND="docker run -d --name swarm-agent swarm join --advertise=${ip}:2375 consul://${kvserver}:8500"
+  COMMAND="docker run --restart=always  -d --name swarm-agent swarm join --advertise=${ip}:2375 consul://${kvserver}:8500"
   echo ${COMMAND}
   ${COMMAND}
 }
 
 SetUpSwarmManager(){
-  COMMAND="docker run -d -p 8501:2375 --name swarm-manager swarm manage consul://${kvserver}:8500"
+  COMMAND="docker run --restart=always  -d -p 8501:2375 --name swarm-manager swarm manage consul://${kvserver}:8500"
   echo ${COMMAND}
   ${COMMAND}
 }
