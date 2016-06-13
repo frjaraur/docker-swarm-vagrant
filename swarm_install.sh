@@ -12,7 +12,7 @@ kvserver=$5
 echo -e "NODENAME: ${nodename}\nIPADDRESS: ${ip}\nROLE: ${role}\nSWARM MANAGER: ${manager}\nSWARM KVSTORE: ${kvserver}\n"
 
 if [ -f /tmp_deploying_stage/${nodename}.swarm_node_provisioned ]
-
+then
 	echo -e "\nNODE ${nodename} already provisioned on SWARM\n" && exit 0
 
 fi
