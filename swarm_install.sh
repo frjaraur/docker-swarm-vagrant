@@ -9,6 +9,8 @@ role=$3
 manager=$4
 kvserver=$5
 
+ERR=0
+
 echo -e "NODENAME: ${nodename}\nIPADDRESS: ${ip}\nROLE: ${role}\nSWARM MANAGER: ${manager}\nSWARM KVSTORE: ${kvserver}\n"
 
 if [ -f /tmp_deploying_stage/${nodename}.swarm_node_provisioned ]
