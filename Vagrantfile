@@ -1,27 +1,27 @@
 boxes = [
     {
-        :node_name => "keyvalue",
+        :node_name => "swarm-keyvalue",
         :node_ip => "10.0.200.10",
         :node_mem => "1524",
         :node_cpu => "1",
         :swarm_role => "keyvalue",
     },
     {
-        :node_name => "manager",
+        :node_name => "swarm-manager",
         :node_ip => "10.0.200.11",
         :node_mem => "1524",
         :node_cpu => "1",
         :swarm_role=> "manager",
     },
     {
-        :node_name => "node2",
+        :node_name => "swarm-node2",
         :node_ip => "10.0.200.12",
         :node_mem => "1524",
         :node_cpu => "1",
         :swarm_role=> "node",
     },
     {
-        :node_name => "node3",
+        :node_name => "swarm-node3",
         :node_ip => "10.0.200.13",
         :node_mem => "1524",
         :node_cpu => "1",
@@ -77,10 +77,10 @@ Vagrant.configure(2) do |config|
       ## ADD HOSTS
       config.vm.provision "shell", inline: <<-SHELL
         echo "127.0.0.1 localhost" >/etc/hosts
-        echo "10.0.200.10 keyvalue keyvalue.dockerlab.local" >>/etc/hosts
-        echo "10.0.200.11 manager manager.dockerlab.local" >>/etc/hosts
-        echo "10.0.200.12 node2 node2.dockerlab.local" >>/etc/hosts
-        echo "10.0.200.13 node3 node3..dockerlab.local" >>/etc/hosts
+        echo "10.0.200.10 swarm-keyvalue swarm-keyvalue.dockerlab.local" >>/etc/hosts
+        echo "10.0.200.11 swarm-manager swarm-manager.dockerlab.local" >>/etc/hosts
+        echo "10.0.200.12 swarm-node2 swarm-node2.dockerlab.local" >>/etc/hosts
+        echo "10.0.200.13 swarm-node3 swarm-node3..dockerlab.local" >>/etc/hosts
       SHELL
 
       nodename=opts[:node_name]
