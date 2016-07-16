@@ -50,7 +50,10 @@ SetUpSwarmManager(){
 apt-get -qq install chrony
 timedatectl set-timezone Europe/Madrid
 
-## Configure Docker Engines with Swarm and KeyValue Store Information
+## Configure Docker Engines with Swarm. TLS and KeyValue Store Information
+mkdir -p /etc/docker/certs.d && chmod 750 /etc/docker/certs.d
+echo "DOCKER_TLS_VERIFY=1" >> /etc/default/docker
+echo "DOCKER_CERT_PATH=/etc/docker/certs.d" >> /etc/default/docker
 echo "DOCKER_OPTS=\"-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375 --cluster-store=consul://${kvserver}:8500 --cluster-advertise=${ip}:2375\"" >> /etc/default/docker
 service docker restart
 
