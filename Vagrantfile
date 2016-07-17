@@ -41,6 +41,7 @@ keyvalue_ip="10.0.200.10"
 
 Vagrant.configure(2) do |config|
   config.vm.box = "ubuntu/trusty64"
+  #config.vm.box = "minimal/trusty64"
   config.vm.synced_folder "tmp_deploying_stage/", "/tmp_deploying_stage",create:true
 
   boxes.each do |opts|

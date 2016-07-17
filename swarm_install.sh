@@ -67,8 +67,13 @@ then
 	-e SERVERIPS="${ip}},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
 	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
 	frjaraur/docker-simple-tlscerts generate_CA
+
+	cp -p /etc/docker/certs.d/ca.pem /tmp_deploying_stage/ca.pem && \
+	cp -p /etc/docker/certs.d/ca-key.pem /tmp_deploying_stage/ca-key.pem 
+
 else
-	/tmp_deploying_stage/ca.pem /etc/docker/certs.d/ca.pem && \
+	cp /tmp_deploying_stage/ca.pem /etc/docker/certs.d/ca.pem && \
+	cp /tmp_deploying_stage/ca-key.pem /etc/docker/certs.d/ca-key.pem && \
 	chown root:root /etc/docker/certs.d/ca.pem && \
 	chmod -v 0444 /etc/docker/certs.d/ca.pem
 
