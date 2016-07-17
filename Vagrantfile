@@ -2,7 +2,7 @@ boxes = [
     {
         :node_name => "swarm-keyvalue",
         :node_ip => "10.0.200.10",
-        :node_mem => "1524",
+        :node_mem => "1024",
         :node_cpu => "1",
         :swarm_role => "keyvalue",
     },
@@ -23,14 +23,14 @@ boxes = [
     {
         :node_name => "swarm-node1",
         :node_ip => "10.0.200.15",
-        :node_mem => "1524",
+        :node_mem => "1024",
         :node_cpu => "1",
         :swarm_role=> "node",
     },
     {
         :node_name => "swarm-node2",
         :node_ip => "10.0.200.16",
-        :node_mem => "1524",
+        :node_mem => "1024",
         :node_cpu => "1",
         :swarm_role=> "node",
     },

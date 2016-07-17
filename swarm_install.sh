@@ -32,14 +32,19 @@ SetUpKVStore(){
 }
 
 SetUpSwarmAgent(){
-  COMMAND="docker run --restart=always  -d --name swarm-agent swarm join --advertise=${ip}:2375 consul://${kvserver}:8500"
+  COMMAND="docker run --restart=always  -d --name swarm-agent -v /etc/docker/certs.d:/certs:ro swarm \
+	join \
+	--advertise=${ip}:2376 consul://${kvserver}:8500"
   echo ${COMMAND}
   ${COMMAND}
   [ $? -ne 0 ] && ERR=$(( $ERR + 1 ))
 }
 
 SetUpSwarmManager(){
-  COMMAND="docker run --restart=always  -d -p 3376:3376 --name swarm-manager swarm manage --host=0.0.0.0:3376 --replication consul://${kvserver}:8500"
+  COMMAND="docker run --restart=always  -d -p 3376:3376 --name swarm-manager 	-v /etc/docker/certs.d:/certs:ro swarm \
+	manage --replication --advertise=${ip}:2376 \
+	--tlsverify --tlscacert=/certs/ca.pem --tlscert=/certs/cert.pem --tlskey=/certs/key.pem \
+	--host=0.0.0.0:3376 consul://${kvserver}:8500"
   echo ${COMMAND}
   ${COMMAND}
   [ $? -ne 0 ] && ERR=$(( $ERR + 1 ))
@@ -69,7 +74,7 @@ then
 	frjaraur/docker-simple-tlscerts generate_CA
 
 	cp -p /etc/docker/certs.d/ca.pem /tmp_deploying_stage/ca.pem && \
-	cp -p /etc/docker/certs.d/ca-key.pem /tmp_deploying_stage/ca-key.pem 
+	cp -p /etc/docker/certs.d/ca-key.pem /tmp_deploying_stage/ca-key.pem
 
 else
 	cp /tmp_deploying_stage/ca.pem /etc/docker/certs.d/ca.pem && \
@@ -83,7 +88,7 @@ echo "Certificates for Server"
 
 	## Generate Server Keys
 	docker run --rm --net=none -e SERVERNAME=${nodename} \
-	-e SERVERIPS="${ip},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
+	-e SERVERIPS="${ip},0.0.0.0,127.0.0.1" -e PASSPHRASE="${PASSPHRASE}"  \
 	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
 	frjaraur/docker-simple-tlscerts generate_serverkeys
 
@@ -92,7 +97,7 @@ echo "Certificates for Client"
 
 	## Generate Client Keys
 	docker run --rm --net=none -e SERVERNAME=${nodename} \
-	-e SERVERIPS="${ip},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
+	-e SERVERIPS="${ip},0.0.0.0,127.0.0.1" -e PASSPHRASE="${PASSPHRASE}"  \
 	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
 	frjaraur/docker-simple-tlscerts generate_clientkeys
 
@@ -107,9 +112,9 @@ echo "Certificates for Client"
 	cp -p /etc/docker/certs.d/ca.pem /root/.docker/ca.pem
 
 ## Configure Docker Engines with Swarm. TLS and KeyValue Store Information
-echo "DOCKER_TLS_VERIFY=1" >> /etc/default/docker
-echo "DOCKER_CERT_PATH=/etc/docker/certs.d" >> /etc/default/docker
-echo "DOCKER_OPTS=\"-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375 --cluster-store=consul://${kvserver}:8500 --cluster-advertise=${ip}:2375\"" >> /etc/default/docker
+#echo "DOCKER_TLS_VERIFY=1" >> /etc/default/docker
+#echo "DOCKER_CERT_PATH=\"/etc/docker/certs.d\"" >> /etc/default/docker
+echo "DOCKER_OPTS=\"-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2376  --tlsverify --tlscacert=/etc/docker/certs.d/ca.pem --tlscert=/etc/docker/certs.d/cert.pem --tlskey=/etc/docker/certs.d/key.pem --cluster-store=consul://${kvserver}:8500 --cluster-advertise=${ip}:2376\"" >> /etc/default/docker
 service docker restart
 
 usermod -aG docker vagrant
@@ -136,6 +141,9 @@ case ${role} in
   ;;
 
 esac
+
+echo "export DOCKER_TLS_VERIFY=1" >>/tmp_deploying_stage/env.sh
+echo "export DOCKER_CERT_PATH=/root/.docker" >>/tmp_deploying_stage/env.sh
 
 [ $ERR -eq 0 ] &&  touch  /tmp_deploying_stage/${nodename}.swarm_node_provisioned && exit 0
 
