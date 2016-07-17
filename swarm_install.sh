@@ -52,13 +52,18 @@ apt-get -qq install chrony
 timedatectl set-timezone Europe/Madrid
 
 ## Generate TLS certs
+
+echo "Enabling TLS on Docker Engines"
+
 mkdir -p /etc/docker/certs.d && chmod 750 /etc/docker/certs.d
 mkdir /root/.docker && chmod 750 /root/.docker
+
+echo "Certificates Authority"
 
 if [ ! -f /tmp_deploying_stage/ca.pem ]
 then
 	## Generate CA
-	docker run -ti --rm --net=none -e SERVERNAME=${nodename} \
+	docker run --rm --net=none -e SERVERNAME=${nodename} \
 	-e SERVERIPS="${ip}},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
 	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
 	frjaraur/docker-simple-tlscerts generate_CA
@@ -69,15 +74,19 @@ else
 
 fi
 
+echo "Certificates for Server"
+
 	## Generate Server Keys
-	docker run -ti --rm --net=none -e SERVERNAME=${nodename} \
+	docker run --rm --net=none -e SERVERNAME=${nodename} \
 	-e SERVERIPS="${ip},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
 	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
 	frjaraur/docker-simple-tlscerts generate_serverkeys
 
+echo "Certificates for Client"
+
 
 	## Generate Client Keys
-	docker run -ti --rm --net=none -e SERVERNAME=${nodename} \
+	docker run --rm --net=none -e SERVERNAME=${nodename} \
 	-e SERVERIPS="${ip},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
 	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
 	frjaraur/docker-simple-tlscerts generate_clientkeys
