@@ -9,6 +9,7 @@ role=$3
 manager=$4
 kvserver=$5
 
+PASSPHRASE="swarm"
 ERR=0
 
 echo -e "NODENAME: ${nodename}\nIPADDRESS: ${ip}\nROLE: ${role}\nSWARM MANAGER: ${manager}\nSWARM KVSTORE: ${kvserver}\n"
@@ -38,7 +39,7 @@ SetUpSwarmAgent(){
 }
 
 SetUpSwarmManager(){
-  COMMAND="docker run --restart=always  -d -p 8501:2375 --name swarm-manager swarm manage consul://${kvserver}:8500"
+  COMMAND="docker run --restart=always  -d -p 3376:3376 --name swarm-manager swarm manage --host=0.0.0.0:3376 --replication consul://${kvserver}:8500"
   echo ${COMMAND}
   ${COMMAND}
   [ $? -ne 0 ] && ERR=$(( $ERR + 1 ))
@@ -50,8 +51,48 @@ SetUpSwarmManager(){
 apt-get -qq install chrony
 timedatectl set-timezone Europe/Madrid
 
-## Configure Docker Engines with Swarm. TLS and KeyValue Store Information
+## Generate TLS certs
 mkdir -p /etc/docker/certs.d && chmod 750 /etc/docker/certs.d
+mkdir /root/.docker && chmod 750 /root/.docker
+
+if [ ! -f /tmp_deploying_stage/ca.pem ]
+then
+	## Generate CA
+	docker run -ti --rm --net=none -e SERVERNAME=${nodename} \
+	-e SERVERIPS="${ip}},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
+	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
+	frjaraur/docker-simple-tlscerts generate_CA
+else
+	/tmp_deploying_stage/ca.pem /etc/docker/certs.d/ca.pem && \
+	chown root:root /etc/docker/certs.d/ca.pem && \
+	chmod -v 0444 /etc/docker/certs.d/ca.pem
+
+fi
+
+	## Generate Server Keys
+	docker run -ti --rm --net=none -e SERVERNAME=${nodename} \
+	-e SERVERIPS="${ip},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
+	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
+	frjaraur/docker-simple-tlscerts generate_serverkeys
+
+
+	## Generate Client Keys
+	docker run -ti --rm --net=none -e SERVERNAME=${nodename} \
+	-e SERVERIPS="${ip},0.0.0.0" -e PASSPHRASE="${PASSPHRASE}"  \
+	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
+	frjaraur/docker-simple-tlscerts generate_clientkeys
+
+	chmod -v 0400 /etc/docker/certs.d/*key.pem
+	chmod -v 0444 /etc/docker/certs.d/ca.pem /etc/docker/certs.d/*cert.pem
+
+	mv /etc/docker/certs.d/server-key.pem /etc/docker/certs.d/key.pem
+	mv /etc/docker/certs.d/server-cert.pem /etc/docker/certs.d/cert.pem
+
+	mv /etc/docker/certs.d/client-key.pem /root/.docker/key.pem
+	mv /etc/docker/certs.d/client-cert.pem /root/.docker/cert.pem
+	cp -p /etc/docker/certs.d/ca.pem /root/.docker/ca.pem
+
+## Configure Docker Engines with Swarm. TLS and KeyValue Store Information
 echo "DOCKER_TLS_VERIFY=1" >> /etc/default/docker
 echo "DOCKER_CERT_PATH=/etc/docker/certs.d" >> /etc/default/docker
 echo "DOCKER_OPTS=\"-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2375 --cluster-store=consul://${kvserver}:8500 --cluster-advertise=${ip}:2375\"" >> /etc/default/docker

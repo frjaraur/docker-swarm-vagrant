@@ -7,22 +7,29 @@ boxes = [
         :swarm_role => "keyvalue",
     },
     {
-        :node_name => "swarm-manager",
+        :node_name => "swarm-manager1",
         :node_ip => "10.0.200.11",
         :node_mem => "1524",
         :node_cpu => "1",
         :swarm_role=> "manager",
     },
     {
-        :node_name => "swarm-node2",
+        :node_name => "swarm-manager2",
         :node_ip => "10.0.200.12",
+        :node_mem => "1524",
+        :node_cpu => "1",
+        :swarm_role=> "manager",
+    },
+    {
+        :node_name => "swarm-node1",
+        :node_ip => "10.0.200.15",
         :node_mem => "1524",
         :node_cpu => "1",
         :swarm_role=> "node",
     },
     {
-        :node_name => "swarm-node3",
-        :node_ip => "10.0.200.13",
+        :node_name => "swarm-node2",
+        :node_ip => "10.0.200.16",
         :node_mem => "1524",
         :node_cpu => "1",
         :swarm_role=> "node",
@@ -60,7 +67,7 @@ Vagrant.configure(2) do |config|
 
 
       if opts[:swarm_role] == "manager"
-    	  config.vm.network "forwarded_port", guest: 8501, host: 8501, auto_correct: true
+    	  config.vm.network "forwarded_port", guest: 3376, host: 3376, auto_correct: true
       end
 
       # config.vm.provision "shell", inline: <<-SHELL
@@ -78,9 +85,12 @@ Vagrant.configure(2) do |config|
       config.vm.provision "shell", inline: <<-SHELL
         echo "127.0.0.1 localhost" >/etc/hosts
         echo "10.0.200.10 swarm-keyvalue swarm-keyvalue.dockerlab.local" >>/etc/hosts
-        echo "10.0.200.11 swarm-manager swarm-manager.dockerlab.local" >>/etc/hosts
-        echo "10.0.200.12 swarm-node2 swarm-node2.dockerlab.local" >>/etc/hosts
-        echo "10.0.200.13 swarm-node3 swarm-node3..dockerlab.local" >>/etc/hosts
+
+        echo "10.0.200.11 swarm-manager1 swarm-manager1.dockerlab.local" >>/etc/hosts
+        echo "10.0.200.12 swarm-manager2 swarm-manager2.dockerlab.local" >>/etc/hosts
+
+        echo "10.0.200.15 swarm-node1 swarm-node1.dockerlab.local" >>/etc/hosts
+        echo "10.0.200.16 swarm-node2 swarm-node2..dockerlab.local" >>/etc/hosts
       SHELL
 
       nodename=opts[:node_name]
