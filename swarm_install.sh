@@ -8,6 +8,7 @@ ip=$2
 role=$3
 manager=$4
 kvserver=$5
+iphostonly=$6
 
 PASSPHRASE="swarm"
 ERR=0
@@ -88,7 +89,7 @@ echo "Certificates for Server"
 
 	## Generate Server Keys
 	docker run --rm --net=none -e SERVERNAME=${nodename} \
-	-e SERVERIPS="${ip},0.0.0.0,127.0.0.1" -e PASSPHRASE="${PASSPHRASE}"  \
+	-e SERVERIPS="${ip},${iphostonly},0.0.0.0,127.0.0.1" -e PASSPHRASE="${PASSPHRASE}"  \
 	-e CLIENTNAME="${nodename}" -v /etc/docker/certs.d:/certs \
 	frjaraur/docker-simple-tlscerts generate_serverkeys
 
@@ -114,10 +115,19 @@ echo "Certificates for Client"
 ## Configure Docker Engines with Swarm. TLS and KeyValue Store Information
 #echo "DOCKER_TLS_VERIFY=1" >> /etc/default/docker
 #echo "DOCKER_CERT_PATH=\"/etc/docker/certs.d\"" >> /etc/default/docker
-echo "DOCKER_OPTS=\"-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2376  --tlsverify --tlscacert=/etc/docker/certs.d/ca.pem --tlscert=/etc/docker/certs.d/cert.pem --tlskey=/etc/docker/certs.d/key.pem --cluster-store=consul://${kvserver}:8500 --cluster-advertise=${ip}:2376\"" >> /etc/default/docker
-service docker restart
+echo "DOCKER_OPTS=\"-H unix:///var/run/docker.sock -H tcp://0.0.0.0:2376  \
+	--tlsverify  \
+	--tlscacert=/etc/docker/certs.d/ca.pem \
+	--tlscert=/etc/docker/certs.d/cert.pem \
+	--tlskey=/etc/docker/certs.d/key.pem \
+	--cluster-store=consul://${kvserver}:8500 --cluster-advertise=${ip}:2376\"" >> /etc/default/docker
 
-usermod -aG docker vagrant
+
+cp -p /etc/docker/certs.d/ca.pem /usr/share/ca-certificates/ca.pem
+
+update-ca-certificates
+
+service docker restart
 
 case ${role} in
   keyvalue)
@@ -142,9 +152,18 @@ case ${role} in
 
 esac
 
+
+## Compose
+curl -L https://github.com/docker/compose/releases/download/1.7.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+
 echo "export DOCKER_TLS_VERIFY=1" >>/tmp_deploying_stage/env.sh
 echo "export DOCKER_CERT_PATH=/root/.docker" >>/tmp_deploying_stage/env.sh
 
-[ $ERR -eq 0 ] &&  touch  /tmp_deploying_stage/${nodename}.swarm_node_provisioned && exit 0
+provisioned="nodename: ${nodename}\nip: ${ip}\nrole: ${role}\nmanager: ${nmanager}\kvserver: ${kvserver}\niphostonly: ${iphostonly}\n"
+
+
+[ $ERR -eq 0 ] &&  echo -e ${provisioned} > /tmp_deploying_stage/${nodename}.swarm_node_provisioned && exit 0
 
 echo "\nAn error ocurred during node ${nodename} provision on SWARM\n"
