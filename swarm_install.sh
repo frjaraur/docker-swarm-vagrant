@@ -157,10 +157,6 @@ esac
 curl -L https://github.com/docker/compose/releases/download/1.7.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-
-echo "export DOCKER_TLS_VERIFY=1" >>/tmp_deploying_stage/env.sh
-echo "export DOCKER_CERT_PATH=/root/.docker" >>/tmp_deploying_stage/env.sh
-
 provisioned="nodename: ${nodename}\nip: ${ip}\nrole: ${role}\nmanager: ${nmanager}\kvserver: ${kvserver}\niphostonly: ${iphostonly}\n"
 
 

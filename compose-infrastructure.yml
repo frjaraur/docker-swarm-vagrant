@@ -1,0 +1,109 @@
+version: '2'
+services:
+    consul-server1:
+        image: frjaraur/infrastructure-consul
+        container_name: consul-infrastructure1
+        ports:
+            - 8300:8300
+            - 8301:8301
+            - 8301:8301/udp
+            - 8302:8302
+            - 8302:8302/udp
+            - 8400:8400
+            - 8500:8500
+            - 8600:8600/udp
+        environment:
+        - "SERVER=true"
+        - "ADVERTISEIP=10.0.200.11"
+        - "constraint:node==swarm-manager1"
+        command: start
+        networks:
+            default:
+                aliases:
+                    - infrastructure1
+        restart: always
+    consul-server2:
+        image: frjaraur/infrastructure-consul
+        container_name: consul-infrastructure2
+        ports:
+            - 8300:8300
+            - 8301:8301
+            - 8301:8301/udp
+            - 8302:8302
+            - 8302:8302/udp
+            - 8400:8400
+            - 8500:8500
+            - 8600:8600/udp
+        environment:
+        - "SERVER=true"
+        - "ADVERTISEIP=10.0.200.12"
+        - "constraint:node==swarm-manager2"
+        command: start
+        networks:
+            default:
+                aliases:
+                    - infrastructure2
+        restart: always
+    consul-server3:
+        image: frjaraur/infrastructure-consul
+        container_name: consul-infrastructure3
+        ports:
+            - 8300:8300
+            - 8301:8301
+            - 8301:8301/udp
+            - 8302:8302
+            - 8302:8302/udp
+            - 8400:8400
+            - 8500:8500
+            - 8600:8600/udp
+        environment:
+        - "SERVER=true"
+        - "ADVERTISEIP=10.0.200.15"
+        - "constraint:node==swarm-node1"
+        command: start
+        networks:
+            default:
+                aliases:
+                    - infrastructure3
+        restart: always
+
+    registrator1:
+        image: gliderlabs/registrator:latest
+        container_name: registrator-infrastructure1
+        environment:
+        - "constraint:node==swarm-manager1"
+        command: consul://infrastructure1:8500
+        networks:
+            default:
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock
+        restart: always
+
+    registrator2:
+        image: gliderlabs/registrator:latest
+        container_name: registrator-infrastructure2
+        environment:
+        - "constraint:node==swarm-manager2"
+        command: consul://infrastructure2:8500
+        networks:
+            default:
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock
+        restart: always
+
+    registrator3:
+        image: gliderlabs/registrator:latest
+        container_name: registrator-infrastructure3
+        environment:
+        - "constraint:node==swarm-node1"
+        command: consul://infrastructure3:8500
+        networks:
+            default:
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock
+        restart: always
+
+networks:
+    default:
+        external:
+            name: infrastructure
