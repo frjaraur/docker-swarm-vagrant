@@ -140,13 +140,15 @@ Vagrant.configure(2) do |config|
   end
   #SWARM environment
   config.vm.provision "shell", inline: <<-SHELL
-    echo "export DOCKER_TLS_VERIFY=1" >>/tmp_deploying_stage/env.sh
-    echo "export DOCKER_CERT_PATH=/root/.docker" >>/tmp_deploying_stage/env.sh
+    echo "export DOCKER_TLS_VERIFY=1" >/tmp_deploying_stage/swarm_env.sh
+    echo "export DOCKER_CERT_PATH=/root/.docker" >>/tmp_deploying_stage/swarm_env.sh
+    echo "export DOCKER_HOST=0.0.0.0:3376" >>/tmp_deploying_stage/swarm_env.sh
   SHELL
 
 
   # Infrastructure
   config.vm.provision "file", source: "compose-infrastructure.yml", destination: "/tmp_deploying_stage/compose-infrastructure.yml"
+  config.vm.provision "file", source: "infrastructure_install.sh", destination: "/tmp_deploying_stage/infrastructure_install.sh"
 
   boxes.each do |opts|
     if opts[:consul_role] == "master"
@@ -155,7 +157,7 @@ Vagrant.configure(2) do |config|
     end
 
     if opts[:swarm_role] == "manager"
-      config.vm.provision :shell, :path => 'infrastructure_install.sh', :args => [ "compose-infrastructure.yml" ]        
+      config.vm.provision :shell, :path => 'infrastructure_install.sh', :args => [ "/tmp_deploying_stage/compose-infrastructure.yml" ]        
     #      docker-compose --project-name 'infrastructure' -f /tmp_deploying_stage/compose-infrastructure.yml up -d
 
      end
