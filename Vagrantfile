@@ -5,7 +5,8 @@ boxes = [
         :node_mem => "1524",
         :node_cpu => "1",
         :swarm_role => "keyvalue",
-        :node_hostonlyip=> "192.168.56.10"
+        :node_hostonlyip=> "192.168.56.10",
+        :consul_role=>"none"
     },
     {
         :node_name => "swarm-manager1",
@@ -13,8 +14,8 @@ boxes = [
         :node_mem => "2048",
         :node_cpu => "1",
         :swarm_role=> "manager",
-        :node_hostonlyip=> "192.168.56.11"
-
+        :node_hostonlyip=> "192.168.56.11",
+        :consul_role=>"master"
     },
     {
         :node_name => "swarm-manager2",
@@ -22,8 +23,8 @@ boxes = [
         :node_mem => "2048",
         :node_cpu => "1",
         :swarm_role=> "manager",
-        :node_hostonlyip=> "192.168.56.12"
-
+        :node_hostonlyip=> "192.168.56.12",
+        :consul_role=>"server"
     },
     {
         :node_name => "swarm-node1",
@@ -31,8 +32,8 @@ boxes = [
         :node_mem => "2048",
         :node_cpu => "1",
         :swarm_role=> "node",
-        :node_hostonlyip=> "192.168.56.13"
-
+        :node_hostonlyip=> "192.168.56.13",
+        :consul_role=>"server"
     },
     {
         :node_name => "swarm-node2",
@@ -40,8 +41,8 @@ boxes = [
         :node_mem => "2048",
         :node_cpu => "1",
         :swarm_role=> "node",
-        :node_hostonlyip=> "192.168.56.14"
-
+        :node_hostonlyip=> "192.168.56.14",
+        :consul_role=>"agent"
     },
 
 ]
@@ -146,7 +147,18 @@ Vagrant.configure(2) do |config|
 
   # Infrastructure
   config.vm.provision "file", source: "compose-infrastructure.yml", destination: "/tmp_deploying_stage/compose-infrastructure.yml"
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   docker-compose --project-name 'infrastructure' -f /tmp_deploying_stage/compose-infrastructure.yml up -d
-  # SHELL
+
+  boxes.each do |opts|
+    if opts[:consul_role] == "master"
+      config.vm.network "forwarded_port", guest: 8500, host: 8500, auto_correct: true
+      config.vm.network "forwarded_port", guest: 8600, host: 8600, auto_correct: true
+    end
+
+    if opts[:swarm_role] == "manager"
+      config.vm.provision :shell, :path => 'infrastructure_install.sh', :args => [ "compose-infrastructure.yml" ]        
+    #      docker-compose --project-name 'infrastructure' -f /tmp_deploying_stage/compose-infrastructure.yml up -d
+
+     end
+
+  end
 end

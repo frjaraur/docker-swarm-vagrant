@@ -37,6 +37,7 @@ services:
         environment:
         - "SERVER=true"
         - "ADVERTISEIP=10.0.200.12"
+        - "MASTERIP=infrastructure1"
         - "constraint:node==swarm-manager2"
         command: start
         networks:
@@ -59,12 +60,37 @@ services:
         environment:
         - "SERVER=true"
         - "ADVERTISEIP=10.0.200.15"
+        - "MASTERIP=infrastructure1"
         - "constraint:node==swarm-node1"
         command: start
         networks:
             default:
                 aliases:
                     - infrastructure3
+        restart: always
+
+    consul-agent1:
+        image: frjaraur/infrastructure-consul
+        container_name: consul-infrastructure4
+        ports:
+            - 8300:8300
+            - 8301:8301
+            - 8301:8301/udp
+            - 8302:8302
+            - 8302:8302/udp
+            - 8400:8400
+            - 8500:8500
+            - 8600:8600/udp
+        environment:
+        - "SERVER=false"
+        - "ADVERTISEIP=10.0.200.16"
+        - "MASTERIP=infrastructure1"
+        - "constraint:node==swarm-node2"
+        command: start
+        networks:
+            default:
+                aliases:
+                    - infrastructure4
         restart: always
 
     registrator1:
@@ -97,6 +123,18 @@ services:
         environment:
         - "constraint:node==swarm-node1"
         command: consul://infrastructure3:8500
+        networks:
+            default:
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock
+        restart: always
+
+    registrator4:
+        image: gliderlabs/registrator:latest
+        container_name: registrator-infrastructure4
+        environment:
+        - "constraint:node==swarm-node2"
+        command: consul://infrastructure4:8500
         networks:
             default:
         volumes:
